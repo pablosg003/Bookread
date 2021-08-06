@@ -6,15 +6,21 @@ import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
+import java.util.GregorianCalendar;
+import java.util.Iterator;
 
 import javax.imageio.ImageIO;
+import javax.swing.AbstractButton;
 import javax.swing.Box;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JRadioButton;
@@ -23,6 +29,8 @@ import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 
+import internal.Login;
+import internal.Signup;
 import listeners.StayLoggedListener;
 
 public class LoginScreen extends MainFrame{
@@ -92,6 +100,9 @@ public class LoginScreen extends MainFrame{
 			private JLabel sStayLoggedL = new JLabel("Stay logged:");
 			private JCheckBox sStayLoggedB = new JCheckBox();
 			
+			private StayLoggedListener lStayLoggedListener;
+			private StayLoggedListener sStayLoggedListener;
+			
 			public LogSignPanel(){
 				
 				//Grupos y JSpinner
@@ -100,11 +111,136 @@ public class LoginScreen extends MainFrame{
 				sGenderGroup.add(sGenderN);
 				
 				//Asignación de oyentes
-				StayLoggedListener lStayLoggedListener = new StayLoggedListener();
-				StayLoggedListener sStayLoggedListener = new StayLoggedListener();
+				lStayLoggedListener = new StayLoggedListener();
+				sStayLoggedListener = new StayLoggedListener();
 				stayLoggedB.addActionListener(lStayLoggedListener);
 				sStayLoggedB.addActionListener(sStayLoggedListener);
 				
+				signupB.addActionListener(new ActionListener() {
+					
+					public void actionPerformed(ActionEvent e) {
+						
+						Color errorColor = new Color(255, 163, 163);
+						
+						//Mail check
+						boolean hasAt = false;
+						boolean validMail = false;
+						for(int i = 0; i<sMailT.getText().length(); i++) {
+							if (sMailT.getText().charAt(i) == '@') hasAt = true;
+							else if (hasAt && sMailT.getText().charAt(i) == '.') validMail = true;
+						}
+						if (!validMail) {
+							sMailT.setBackground(errorColor);
+							JOptionPane.showMessageDialog(signup.getRootPane().getRootPane(), "Please enter a valid e-mail.", "Error", JOptionPane.ERROR_MESSAGE);
+							return;
+						} else {
+							sMailT.setBackground(Color.WHITE);
+						}
+						
+						//User check
+						boolean validUser = true;
+						for (char a:sUserT.getText().toCharArray()) {
+							if(a==' ') validUser = false;
+						}
+						if(sUserT.getText().length()!=0 && validUser) sUserT.setBackground(Color.WHITE);
+						else {
+							sUserT.setBackground(errorColor);
+							JOptionPane.showMessageDialog(signup.getRootPane().getRootPane(), "Please enter a valid username.", "Error", JOptionPane.ERROR_MESSAGE);
+							return;
+						}
+						
+						//Password check
+						boolean validPassword = true;
+						for (char a:sPasswordT.getPassword()) {
+							if(a==' ') validPassword = false;
+						}
+						if(sPasswordT.getPassword().length!=0 && validPassword) sPasswordT.setBackground(Color.WHITE);
+						else {
+							sPasswordT.setBackground(errorColor);
+							JOptionPane.showMessageDialog(signup.getRootPane().getRootPane(), "Please enter a valid password.", "Error", JOptionPane.ERROR_MESSAGE);
+							return;
+						}
+						
+						//Name check
+						if(sNameT.getText().length()!=0) sNameT.setBackground(Color.WHITE);
+						else {
+							sNameT.setBackground(errorColor);
+							JOptionPane.showMessageDialog(signup.getRootPane().getRootPane(), "Please enter a name.", "Error", JOptionPane.ERROR_MESSAGE);
+							return;
+						}
+						
+						//Surname check
+						if(sSurnameT.getText().length()!=0) sSurnameT.setBackground(Color.WHITE);
+						else {
+							sSurnameT.setBackground(errorColor);
+							JOptionPane.showMessageDialog(signup.getRootPane().getRootPane(), "Please enter a surname.", "Error", JOptionPane.ERROR_MESSAGE);
+							return;
+						}
+						
+						//Birthdate check
+						int month = (int) birthMonth.getValue();
+						int day = (int) birthDay.getValue();
+						int year = (int) birthYear.getValue();
+						GregorianCalendar date;
+
+						if((month == 1 && day <= 31) || (month == 2 && day <= 28) || (month == 2 && day <= 29 && year % 4 == 0) || (month == 3 && day <= 31) || (month == 4 && day <= 30) || (month == 5 && day <= 31) || (month == 6 && day <= 30) || (month == 7 && day <= 31) || (month == 8 && day <= 31) || (month == 9 && day <= 30) || (month == 10 && day <= 31) || (month == 11 && day <= 30) || (month == 12 && day <= 31)) date = new GregorianCalendar(year, month, day);
+						else {
+							JOptionPane.showMessageDialog(signup.getRootPane().getRootPane(), "Please enter a valid date.", "Error", JOptionPane.ERROR_MESSAGE);
+							return;
+						}
+
+						//Gender check
+						String gender = null;
+						Iterator<AbstractButton> buttons = sGenderGroup.getElements().asIterator();
+						while (buttons.hasNext()) {
+							AbstractButton but = (AbstractButton) buttons.next();
+							if (but.isSelected()) {
+								gender = but.getText();
+							}
+						}
+						if (gender == null) {
+							JOptionPane.showMessageDialog(signup.getRootPane().getRootPane(), "Please select a gender.", "Error", JOptionPane.ERROR_MESSAGE);
+							return;
+						}
+						
+						Signup.createNewUser(sMailT.getText(), sUserT.getText(), sPasswordT.getPassword(), sNameT.getText(), sSurnameT.getText(), date, gender, sStayLoggedListener.isLogged());
+					}
+				});
+				
+				loginB.addActionListener(new ActionListener() {
+					
+					public void actionPerformed(ActionEvent e) {
+						
+						Color errorColor = new Color(255, 163, 163);
+						
+						//User check
+						boolean validUser = true;
+						for (char a:lUserT.getText().toCharArray()) {
+							if(a==' ') validUser = false;
+						}
+						if(lUserT.getText().length()!=0 && validUser) lUserT.setBackground(Color.WHITE);
+						else {
+							lUserT.setBackground(errorColor);
+							JOptionPane.showMessageDialog(signup.getRootPane().getRootPane(), "Please enter a valid username.", "Error", JOptionPane.ERROR_MESSAGE);
+							return;
+						}
+						
+						//Password check
+						boolean validPassword = true;
+						for (char a:lPasswordT.getPassword()) {
+							if(a==' ') validPassword = false;
+						}
+						if(lPasswordT.getPassword().length!=0 && validPassword) lPasswordT.setBackground(Color.WHITE);
+						else {
+							lPasswordT.setBackground(errorColor);
+							JOptionPane.showMessageDialog(signup.getRootPane().getRootPane(), "Please enter a valid password.", "Error", JOptionPane.ERROR_MESSAGE);
+							return;
+						}
+						
+						Login.enter(lUserT.getText(), lPasswordT.getPassword(), lStayLoggedListener.isLogged());
+					}
+				});
+								
 				//Log in panel
 				login.setLayout(new GridBagLayout());
 				GridBagConstraints c = new GridBagConstraints();
@@ -280,7 +416,5 @@ public class LoginScreen extends MainFrame{
 			}
 			
 		}, BorderLayout.CENTER);
-		
 	}
-	
 }
