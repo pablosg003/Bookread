@@ -11,7 +11,7 @@ public class Book {
 	private boolean isFinished;
 	private static int nextId = 0;
 
-	public Book(String title, String author, int pages) {
+	public Book(String title, String author, int pages, int status) {
 		
 		this.title = title;
 		this.author = author;
@@ -21,6 +21,7 @@ public class Book {
 		isFinished = false;
 		id = nextId;
 		nextId++;
+		
 	}
 	
 	//Getters
@@ -71,5 +72,4 @@ public class Book {
 			finish = null;
 		}
 	}
-	
 }

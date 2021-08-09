@@ -9,7 +9,9 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.GregorianCalendar;
 import java.util.Iterator;
 
@@ -29,8 +31,7 @@ import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 
-import internal.Login;
-import internal.Signup;
+import internal.User;
 import listeners.StayLoggedListener;
 
 public class LoginScreen extends MainFrame{
@@ -105,12 +106,30 @@ public class LoginScreen extends MainFrame{
 			
 			public LogSignPanel(){
 				
-				//Grupos y JSpinner
+				//Remember last user
+				for (String userName: User.userStorage.list()) {
+					try {
+						ObjectInputStream storage2 = new ObjectInputStream(new FileInputStream(new File("files"+File.separator+"users"+File.separator+userName+File.separator+userName+".user")));
+						User user = (User) storage2.readObject();
+						
+						if (user.getStayLogged()) {
+							lUserT.setText(user.getUsername());
+							lPasswordT.setText(user.getPassword());
+							stayLoggedB.setSelected(true);
+						}
+					} catch (IOException e) {
+						e.printStackTrace();
+					} catch (ClassNotFoundException e) {
+						e.printStackTrace();
+					}
+				}
+				
+				//Groups and JSpinner
 				sGenderGroup.add(sGenderF);
 				sGenderGroup.add(sGenderM);
 				sGenderGroup.add(sGenderN);
 				
-				//Asignación de oyentes
+				//Listener addition
 				lStayLoggedListener = new StayLoggedListener();
 				sStayLoggedListener = new StayLoggedListener();
 				stayLoggedB.addActionListener(lStayLoggedListener);
@@ -203,7 +222,13 @@ public class LoginScreen extends MainFrame{
 							return;
 						}
 						
-						Signup.createNewUser(sMailT.getText(), sUserT.getText(), sPasswordT.getPassword(), sNameT.getText(), sSurnameT.getText(), date, gender, sStayLoggedListener.isLogged());
+						User user = User.signup(sMailT.getText(), sUserT.getText(), sPasswordT.getPassword(), sNameT.getText(), sSurnameT.getText(), date, gender, sStayLoggedListener.isLogged());
+						if(user.equals(null)) {
+							JOptionPane.showMessageDialog(signup.getRootPane().getRootPane(), "That username is already used. Please change it.", "Error", JOptionPane.ERROR_MESSAGE);
+							return;
+						} else {
+							login(user);
+						}
 					}
 				});
 				
@@ -237,7 +262,16 @@ public class LoginScreen extends MainFrame{
 							return;
 						}
 						
-						Login.enter(lUserT.getText(), lPasswordT.getPassword(), lStayLoggedListener.isLogged());
+						User loginResult = User.login(lUserT.getText(), lPasswordT.getPassword(), lStayLoggedListener.isLogged());
+						if (loginResult.equals(null)) {
+							
+							JOptionPane.showMessageDialog(signup.getRootPane().getRootPane(), "The user or password are incorrect.", "Error", JOptionPane.ERROR_MESSAGE);
+							return;
+						} else {
+							
+							login(loginResult);
+						}
+						
 					}
 				});
 								
@@ -416,5 +450,13 @@ public class LoginScreen extends MainFrame{
 			}
 			
 		}, BorderLayout.CENTER);
+	}
+	
+	//Actions to perform when logged
+	private void login(User user) {
+		
+		setVisible(false);
+		@SuppressWarnings("unused")
+		MainScreen newWindow = new MainScreen(user);
 	}
 }
